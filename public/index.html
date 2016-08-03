@@ -6,11 +6,37 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1, IE=9">
     <meta name="viewport" content="initial-scale=1 maximum-scale=1 user-scalable=0 minimal-ui" />
+    <style>
+        html { background: #2c263a; color: #e5cdc2; font-family: 'jubilat', serif; }
+        html, body { height: 100%; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'atrament-web', sans-serif; }
+        a { color: #745063; text-decoration: none; }
+        a:hover { color: #e5cdc2; }
+        body { display: flex; align-items: center; justify-content: center }
+        .game-wrap {  }
+        #game { width: 640px; height: 480px; }
+        .game-title { margin: 0; font-size: 48px; }
+        .game-source { margin: 0; text-align: right; font-size: 24px; font-family: 'atrament-web', sans-serif; }
+    </style>
     <script src="//cdn.jsdelivr.net/phaser/2.2.2/phaser.min.js"></script>
+    <script>
+      (function(d) {
+        var config = {
+          kitId: 'hca1dif',
+          scriptTimeout: 3000,
+          async: true
+        },
+        h=d.documentElement,t=setTimeout(function(){h.className=h.className.replace(/\bwf-loading\b/g,"")+" wf-inactive";},config.scriptTimeout),tk=d.createElement("script"),f=false,s=d.getElementsByTagName("script")[0],a;h.className+=" wf-loading";tk.src='https://use.typekit.net/'+config.kitId+'.js';tk.async=true;tk.onload=tk.onreadystatechange=function(){a=this.readyState;if(f||a&&a!="complete"&&a!="loaded")return;f=true;clearTimeout(t);try{Typekit.load(config)}catch(e){}};s.parentNode.insertBefore(tk,s)
+      })(document);
+    </script>
 </head>
 <body>
 
-    <div id="game"></div>
+    <div class="game-wrap">
+        <h1 class="game-title">blob</h1>
+        <div id="game"></div>
+        <p class="game-source"><a title="blob in GitHub" href="https://github.com/cballenar/blob">View in GitHub</a></p>
+    </div>
 
 </body>
 <script>
