@@ -1,220 +1,111 @@
-var randomBetween = function(min,max) {
-    return Math.floor(Math.random()*(max-min+1)+min);
-};
+window.onload = function() {
+    var game = new Phaser.Game(640, 480, Phaser.CANVAS, "game", {init: onInit, preload:onPreload, create:onCreate, preRender:onPreRender, update:onUpdate});
 
-var game = new Phaser.Game(640, 480, Phaser.CANVAS, 'game');
+    var bg,
+        trees,
+        enemy,
+        player,
+        platforms,
 
-var PhaserGame = function () {
+        gravity = 1200,
+        enemySpeed = 180,
 
-    this.bg = null;
-    this.trees = null;
-
-    this.player = null;
-
-    this.platforms = null;
-    this.clouds = null;
-
-    this.facing = 'left';
-    this.jumpTimer = 0;
-    this.cursors = null;
-    this.locked = false;
-    this.lockedTo = null;
-    this.wasLocked = false;
-    this.willJump = false;
-
-};
-
-PhaserGame.prototype = {
-
-    init: function () {
-        this.tileSize = 32;
-
-        this.chunks = 4;
-        this.chunkWidth = 640;
-        this.chunkHeight = 480;
-
-        this.verticalSpacing = 4.5 * this.tileSize; // spacing between floor levels
-        this.tilesWide = this.chunkWidth / this.tileSize; // tiles needed across width of stage
+        tileSize = 32,
+        chunks = 4,
+        chunkWidth = 640,
+        chunkHeight = 480,
+        verticalSpacing = 4.5 * tileSize, // spacing between floor levels
+        tilesWide = chunkWidth / tileSize, // tiles needed across width of stage
 
         // define world dimensions
-        this.worldWidth = this.chunkWidth*this.chunks;
-        this.worldHeight = this.chunkHeight*this.chunks;
+        worldWidth = chunkWidth*chunks,
+        worldHeight = chunkHeight*chunks,
 
-        this.game.renderer.renderSession.roundPixels = true;
-
-        this.world.resize(this.worldWidth, this.worldHeight);
-
-        this.physics.startSystem(Phaser.Physics.ARCADE);
-
-        this.physics.arcade.gravity.y = 1200;
-    },
-
-    preload: function () {
-        this.load.image('trees', 'assets/trees-h.png');
-        this.load.image('background', 'assets/clouds-h.png');
-
-        this.load.image('tile', 'assets/tile.png');
-        this.load.spritesheet('blob', 'assets/blob.png', 32, 48);
-        this.load.spritesheet('antiblob', 'assets/antiblob.png', 32, 48);
-        //  Note: Graphics are Copyright 2015 Photon Storm Ltd.
-    },
-
-    create: function () {
-        this.initBackgrounds();
-        this.initPlatforms();
+        facing = 'left',
+        jumpTimer = 0,
+        cursors = null,
+        willJump = false;
 
 
-        /* Player
-         * ================================================
-         */
-        this.player = this.add.sprite(randomBetween(0, this.game.world.width-32), this.game.world.height-96, 'blob');
 
-        this.physics.arcade.enable(this.player);
+    /* World functions
+    ** ================================================
+    **/
+    function onInit() {
+        game.renderer.renderSession.roundPixels = true;
+        game.world.resize(worldWidth, worldHeight);
+        game.physics.startSystem(Phaser.Physics.ARCADE);
+        game.physics.arcade.gravity.y = gravity;
+    };
 
-        this.player.body.collideWorldBounds = true;
-        this.player.body.setSize(20, 32, 5, 16);
+    function onPreload() {
+        game.load.image('tile', 'assets/tile.png');
+        game.load.image('trees', 'assets/trees-h.png');
+        game.load.image('background', 'assets/clouds-h.png');
+        game.load.spritesheet('blob', 'assets/blob.png', 32, 48);
+        game.load.spritesheet('antiblob', 'assets/antiblob.png', 32, 48);
+    };
 
-        this.player.animations.add('left', [0, 1, 2, 3], 10, true);
-        this.player.animations.add('turn', [4], 20, true);
-        this.player.animations.add('right', [5, 6, 7, 8], 10, true);
+    function onCreate() {
+        initBackgrounds();
+        initPlatforms();
 
-        this.camera.follow(this.player);
-
-        this.cursors = this.input.keyboard.createCursorKeys();
-
-        /* Enemies
-        ** ================================================
-        **/
-        this.enemy = this.add.sprite(randomBetween(0, this.game.world.width-32), this.game.world.height-96, 'antiblob');
-        this.physics.arcade.enable(this.enemy);
-
-        this.enemy.body.collideWorldBounds = true;
-        this.enemy.body.setSize(20, 32, 5, 16);
-
-        this.enemy.animations.add('left', [0, 1, 2, 3], 10, true);
-        this.enemy.animations.add('turn', [4], 20, true);
-        this.enemy.animations.add('right', [5, 6, 7, 8], 10, true);
+        // add player
+        // to be moved into its own function
+        player = new Player(game, randomBetween(0, game.world.width-32), game.world.height-96);
+        game.add.existing(player);
 
 
-    },
+        // add enemies
+        // find better way to spawn enemies randomly
+        enemy = new Enemy(game, randomBetween(0, worldWidth-32), randomBetween(0, worldHeight-32),  1, enemySpeed);
+        game.add.existing(enemy);
+        enemy = new Enemy(game, randomBetween(0, worldWidth-32), randomBetween(0, worldHeight-32), -1, enemySpeed);
+        game.add.existing(enemy);
+        enemy = new Enemy(game, randomBetween(0, worldWidth-32), randomBetween(0, worldHeight-32),  1, enemySpeed);
+        game.add.existing(enemy)
+        enemy = new Enemy(game, randomBetween(0, worldWidth-32), randomBetween(0, worldHeight-32), -1, enemySpeed);
+        game.add.existing(enemy)
+        enemy = new Enemy(game, randomBetween(0, worldWidth-32), randomBetween(0, worldHeight-32),  1, enemySpeed);
+        game.add.existing(enemy)
+        enemy = new Enemy(game, randomBetween(0, worldWidth-32), randomBetween(0, worldHeight-32), -1, enemySpeed);
+        game.add.existing(enemy)
+    };
 
-    preRender: function () {
-
-        if (this.game.paused)
-        {
+    function onPreRender() {
+        if (game.paused) {
             //  Because preRender still runs even if your game pauses!
             return;
         }
+    };
 
-        if (this.locked || this.wasLocked)
-        {
-            this.player.x += this.lockedTo.deltaX;
-            this.player.y = this.lockedTo.y - 48;
-
-            if (this.player.body.velocity.x !== 0)
-            {
-                this.player.body.velocity.y = 0;
-            }
-        }
-
-        if (this.willJump)
-        {
-            this.willJump = false;
-
-            if (this.lockedTo && this.lockedTo.deltaY < 0 && this.wasLocked)
-            {
-                //  If the platform is moving up we add its velocity to the players jump
-                this.player.body.velocity.y = -300 + (this.lockedTo.deltaY * 10);
-            }
-            else
-            {
-                this.player.body.velocity.y = -600;
-            }
-
-            this.jumpTimer = this.time.time + 750;
-        }
-
-        if (this.wasLocked)
-        {
-            this.wasLocked = false;
-            this.lockedTo.playerLocked = false;
-            this.lockedTo = null;
-        }
-
-    },
-
-    update: function () {
-
+    function onUpdate() {
         // move background with camera
-        this.background.tilePosition.x = -(this.camera.x * 0.1);
-        this.trees.tilePosition.x = -(this.camera.x * 0.3);
+        bg.tilePosition.x = -(game.camera.x * 0.1);
+        trees.tilePosition.x = -(game.camera.x * 0.3);
+    }
 
-        this.physics.arcade.collide([this.player, this.enemy], this.platforms);
 
-        //  Do this AFTER the collide check, or we won't have blocked/touching set
-        this.player.isStanding = this.player.body.blocked.down || this.player.body.touching.down || this.locked;
 
-        this.player.body.velocity.x = 0;
-        this.enemy.body.velocity.x = 5;
+    /* Backgrounds
+    ** ================================================
+    **/
+    function initBackgrounds() {
+        // set first background layer
+        bg = game.add.tileSprite(0, 0, 640, 480, 'background');
+        bg.fixedToCamera = true;
 
-        if (this.cursors.left.isDown)
-        {
-            this.player.body.velocity.x = -240;
+        // set second background layer
+        trees = game.add.tileSprite(0, 364, 640, 116, 'trees');
+        trees.fixedToCamera = true;
+    };
 
-            if (this.facing !== 'left')
-            {
-                this.player.play('left');
-                this.facing = 'left';
-            }
-        }
-        else if (this.cursors.right.isDown)
-        {
-            this.player.body.velocity.x = 240;
 
-            if (this.facing !== 'right')
-            {
-                this.player.play('right');
-                this.facing = 'right';
-            }
-        }
-        else
-        {
-            if (this.facing !== 'idle')
-            {
-                this.player.animations.stop();
 
-                // if (this.facing === 'left')
-                // {
-                //     this.player.frame = 0;
-                // }
-                // else
-                // {
-                //     this.player.frame = 5;
-                // }
-                this.player.frame = 4;
-
-                this.facing = 'idle';
-            }
-        }
-
-        if (this.player.isStanding && this.cursors.up.isDown && this.time.time > this.jumpTimer)
-        {
-            if (this.locked)
-            {
-                this.cancelLock();
-            }
-
-            this.willJump = true;
-        }
-
-        if (this.locked)
-        {
-            this.checkLock();
-        }
-
-    },
-
-    createTile: function(group, x, y, sprite=true) {
+    /* Floors
+    ** ================================================
+    **/
+    function createTile(group, x, y, sprite=true) {
         // Get a tile that is not currently on screen
         var tile = group.getFirstDead();
 
@@ -230,77 +121,67 @@ PhaserGame.prototype = {
         } else {
             console.error('No more tiles available in group.');
         }
-    },
+    };
 
-    createFloors: function() {
+    function createFloors() {
         // define lowest and highest y coordinates for platforms
-        var lowest = this.game.world.height - this.tileSize,
-            highest = 2 * (this.tileSize + this.verticalSpacing);
+        var lowest = game.world.height - tileSize,
+            highest = tileSize + verticalSpacing;
 
         // keep creating platforms from the lowest until the highest point allowed
         // use verticalSpacing to define the y coordinate for the next level
-        for (var y = lowest; y > highest; y = y - this.verticalSpacing) {
+        for (var y = lowest; y > highest; y = y - verticalSpacing) {
 
             // if lowest level, fill with blocks
             if ( y == lowest ) {
-                for (var i = 0, j = this.game.world.width; i < j; i++) {
-                    var x = i*this.tileSize;
-                    this.createTile(this.platforms, x, y, false);
+                for (var i = 0, j = game.world.width; i < j; i++) {
+                    var x = i*tileSize;
+                    createTile(platforms, x, y, false);
                 }
 
             // else build by chunks using matrix
             } else {
 
                 // iterate through chunks
-                for (var chunkNumber = 0; chunkNumber < this.chunks; chunkNumber++) {
+                for (var chunkNumber = 0; chunkNumber < chunks+1; chunkNumber++) {
 
                     // get chunk's x coordinate
-                    chunkX = chunkNumber * this.chunkWidth;
+                    chunkX = chunkNumber * chunkWidth;
 
                     // get a random floor from matrix
-                    floor = this.matrix[randomBetween(0,9)]
+                    floor = matrix[randomBetween(0,9)]
 
                     // iterate though tiles in stage
-                    for (var tileNumber = 0; tileNumber < this.tilesWide; tileNumber++) {
+                    for (var tileNumber = 0; tileNumber < tilesWide; tileNumber++) {
 
                         // if matrix cell returns positive, create tile
                         if ( floor[tileNumber] ) {
                             // calculate tile x coordinate and create tile
-                            var x = chunkX + (tileNumber * this.tileSize);
-                            this.createTile(this.platforms, x, y, false);
+                            var x = chunkX + (tileNumber * tileSize);
+                            createTile(platforms, x, y, false);
                         }
                     }
                 }
             }
         }
-    },
+    };
 
-    initPlatforms: function() {
+    function initPlatforms() {
         // group of platforms that don't move
-        this.platforms = this.add.physicsGroup();
+        platforms = game.add.physicsGroup();
 
         // calculate approximate number of tiles needed to fill screen
-        var totalTiles = 15 * this.chunks * this.tilesWide * ( this.chunkHeight / this.verticalSpacing )
-        this.platforms.createMultiple(12000, 'tile', 0);
+        var totalTiles = 15 * chunks * tilesWide * ( chunkHeight / verticalSpacing )
+        platforms.createMultiple(12000, 'tile', 0);
 
         // add platforms properties
-        this.platforms.setAll('body.allowGravity', false);
-        this.platforms.setAll('body.immovable', true);
+        platforms.setAll('body.allowGravity', false);
+        platforms.setAll('body.immovable', true);
 
-        this.createFloors();
-    },
+        createFloors();
+    };
 
-    initBackgrounds: function() {
-        // set first background layer
-        this.background = this.add.tileSprite(0, 0, 640, 480, 'background');
-        this.background.fixedToCamera = true;
-
-        // set second background layer
-        this.trees = this.add.tileSprite(0, 364, 640, 116, 'trees');
-        this.trees.fixedToCamera = true;
-    },
-
-    matrix: [
+    var matrix = [
         [0,0,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,0,0],
         [0,0,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,0,0],
         [1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -322,8 +203,124 @@ PhaserGame.prototype = {
         [1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1],
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1],
         [1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-    ],
+    ];
 
-};
 
-game.state.add('Game', PhaserGame, true);
+
+    /* Player
+    ** ================================================
+    **/
+    Player = function (game, x, y, direction, speed) {
+        Phaser.Sprite.call(this, game, x, y, "blob");
+        game.physics.enable(this, Phaser.Physics.ARCADE);
+        game.cursors = game.input.keyboard.createCursorKeys();
+
+        this.body.collideWorldBounds = true;
+        this.body.setSize(20, 32, 5, 16);
+
+        this.animations.add('left', [0, 1, 2, 3], 8, true);
+        this.animations.add('turn', [4], 20, true);
+        this.animations.add('right', [5, 6, 7, 8], 8, true);
+
+        game.camera.follow(this);
+    };
+
+    Player.prototype = Object.create(Phaser.Sprite.prototype);
+    Player.prototype.constructor = Player;
+
+    Player.prototype.update = function() {
+        game.physics.arcade.collide(player, platforms);
+
+        //  Do this AFTER the collide check, or we won't have blocked/touching set
+        this.isStanding = this.body.blocked.down || this.body.touching.down;
+
+        this.body.velocity.x = 0;
+
+        // move left
+        if (game.cursors.left.isDown) {
+            this.body.velocity.x = -240;
+
+            if (facing !== 'left') {
+                this.play('left');
+                facing = 'left';
+            }
+        }
+        // move right
+        else if (game.cursors.right.isDown) {
+            this.body.velocity.x = 240;
+
+            if (facing !== 'right') {
+                this.play('right');
+                facing = 'right';
+            }
+        }
+        // stay put
+        else {
+            if (facing !== 'idle') {
+                this.animations.stop();
+                this.frame = 4;
+                facing = 'idle';
+            }
+        }
+
+        // perform jump
+        if (this.isStanding && game.cursors.up.isDown && game.time.time > jumpTimer) {
+            this.body.velocity.y = -600;
+            jumpTimer = game.time.time + 500;
+        }
+    };
+
+
+
+    /* Enemy
+    ** ================================================
+    **/
+    Enemy = function (game, x, y, direction, speed) {
+        Phaser.Sprite.call(this, game, x, y, "antiblob");
+        this.anchor.setTo(0.5);
+        game.physics.enable(this, Phaser.Physics.ARCADE);
+        this.xSpeed = direction*speed;
+
+        // don't render object if outside camera. could be slow with large numbers
+        this.autoCull = true;
+
+        this.body.bounce.setTo(0.4, 0.4);
+        this.animations.add('left', [0, 1, 2, 3], 6, true);
+        this.animations.add('turn', [4], 20, true);
+        this.animations.add('right', [5, 6, 7, 8], 6, true);
+    };
+
+    Enemy.prototype = Object.create(Phaser.Sprite.prototype);
+    Enemy.prototype.constructor = Enemy;
+
+    Enemy.prototype.update = function() {
+        game.physics.arcade.collide(this, platforms, moveEnemy);
+        this.body.collideWorldBounds = true;
+        this.body.velocity.x = this.xSpeed;
+
+        if (this.body.velocity.x < 0) {
+            this.play('left');
+        }
+        else if (this.body.velocity.x > 0) {
+            this.play('right');
+        }
+    };
+
+    function moveEnemy(enemy, platform) {
+        if (
+            (enemy.xSpeed < 0 && enemy.x <= enemy.width/2) ||
+            (enemy.xSpeed > 0 && enemy.x >= worldWidth - enemy.width/2)
+        ) {
+            enemy.xSpeed*=-1;
+        }
+    }
+
+
+
+    /* Helper functions
+    ** ================================================
+    **/
+    function randomBetween(min,max) {
+        return Math.floor(Math.random()*(max-min+1)+min);
+    };
+}
