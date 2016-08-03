@@ -1,0 +1,10 @@
+html { background: #2c263a; color: #e5cdc2; font-family: 'jubilat', serif; }
+html, body { height: 100%; }
+h1, h2, h3, h4, h5, h6 { font-family: 'atrament-web', sans-serif; }
+a { color: #745063; text-decoration: none; }
+a:hover { color: #e5cdc2; }
+body { display: flex; align-items: center; justify-content: center }
+.game-wrap {  }
+#game { width: 640px; height: 480px; }
+.game-title { margin: 0; font-size: 48px; }
+.game-source { margin: 0; text-align: right; font-size: 24px; font-family: 'atrament-web', sans-serif; }
