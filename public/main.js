@@ -1,14 +1,15 @@
 window.onload = function() {
-    var game = new Phaser.Game(640, 480, Phaser.CANVAS, "game", {init: onInit, preload:onPreload, create:onCreate, preRender:onPreRender, update:onUpdate});
+    var game = new Phaser.Game(640, 480, Phaser.WEBGL, "game", {init: onInit, preload:onPreload, create:onCreate, preRender:onPreRender, update:onUpdate});
 
     var bg,
         trees,
-        enemy,
+        enemies,
         player,
         platforms,
 
         gravity = 1200,
-        enemySpeed = 180,
+        enemySpeed = 192,
+        playerSpeed = 240,
 
         tileSize = 32,
         chunks = 4,
@@ -21,10 +22,7 @@ window.onload = function() {
         worldWidth = chunkWidth*chunks,
         worldHeight = chunkHeight*chunks,
 
-        facing = 'left',
-        jumpTimer = 0,
-        cursors = null,
-        willJump = false;
+        jumpTimer = 0;
 
 
 
@@ -51,25 +49,15 @@ window.onload = function() {
         initPlatforms();
 
         // add player
-        // to be moved into its own function
         player = new Player(game, randomBetween(0, game.world.width-32), game.world.height-96);
         game.add.existing(player);
 
-
         // add enemies
-        // find better way to spawn enemies randomly
-        enemy = new Enemy(game, randomBetween(0, worldWidth-32), randomBetween(0, worldHeight-32),  1, enemySpeed);
-        game.add.existing(enemy);
-        enemy = new Enemy(game, randomBetween(0, worldWidth-32), randomBetween(0, worldHeight-32), -1, enemySpeed);
-        game.add.existing(enemy);
-        enemy = new Enemy(game, randomBetween(0, worldWidth-32), randomBetween(0, worldHeight-32),  1, enemySpeed);
-        game.add.existing(enemy)
-        enemy = new Enemy(game, randomBetween(0, worldWidth-32), randomBetween(0, worldHeight-32), -1, enemySpeed);
-        game.add.existing(enemy)
-        enemy = new Enemy(game, randomBetween(0, worldWidth-32), randomBetween(0, worldHeight-32),  1, enemySpeed);
-        game.add.existing(enemy)
-        enemy = new Enemy(game, randomBetween(0, worldWidth-32), randomBetween(0, worldHeight-32), -1, enemySpeed);
-        game.add.existing(enemy)
+        enemies = game.add.physicsGroup();
+        for (var i = 1; i < chunks*2; i++) {
+            var enemy = new Enemy(game, randomBetween(0, worldWidth-32), randomBetween(0, worldHeight-32),  1, enemySpeed);
+            enemies.add(enemy);
+        }
     };
 
     function onPreRender() {
@@ -83,6 +71,14 @@ window.onload = function() {
         // move background with camera
         bg.tilePosition.x = -(game.camera.x * 0.1);
         trees.tilePosition.x = -(game.camera.x * 0.3);
+
+        // call the 'restart' function when the player touches the enemy
+        game.physics.arcade.overlap(player, enemies, restart, null, game);
+    }
+
+    // Function to restart the game
+    function restart() {
+        game.state.start('default');
     }
 
 
@@ -218,9 +214,8 @@ window.onload = function() {
         this.body.collideWorldBounds = true;
         this.body.setSize(20, 32, 5, 16);
 
-        this.animations.add('left', [0, 1, 2, 3], 8, true);
-        this.animations.add('turn', [4], 20, true);
-        this.animations.add('right', [5, 6, 7, 8], 8, true);
+        this.animations.add('left', [1, 2, 3, 4, 5, 6], 18, true);
+        this.animations.add('right', [8, 9, 10, 11, 12, 13], 18, true);
 
         game.camera.follow(this);
     };
@@ -238,29 +233,18 @@ window.onload = function() {
 
         // move left
         if (game.cursors.left.isDown) {
-            this.body.velocity.x = -240;
-
-            if (facing !== 'left') {
-                this.play('left');
-                facing = 'left';
-            }
+            this.body.velocity.x = -playerSpeed;
+            this.play('left');
         }
         // move right
         else if (game.cursors.right.isDown) {
-            this.body.velocity.x = 240;
-
-            if (facing !== 'right') {
-                this.play('right');
-                facing = 'right';
-            }
+            this.body.velocity.x = playerSpeed;
+            this.play('right');
         }
         // stay put
         else {
-            if (facing !== 'idle') {
-                this.animations.stop();
-                this.frame = 4;
-                facing = 'idle';
-            }
+            this.animations.stop();
+            this.frame = 7;
         }
 
         // perform jump
@@ -284,10 +268,10 @@ window.onload = function() {
         // don't render object if outside camera. could be slow with large numbers
         this.autoCull = true;
 
+        this.body.setSize(32, 24, 0, 12);
         this.body.bounce.setTo(0.4, 0.4);
-        this.animations.add('left', [0, 1, 2, 3], 6, true);
-        this.animations.add('turn', [4], 20, true);
-        this.animations.add('right', [5, 6, 7, 8], 6, true);
+        this.animations.add('left', [1, 2, 3, 4, 5, 6], 18, true);
+        this.animations.add('right', [8, 9, 10, 11, 12, 13], 18, true);
     };
 
     Enemy.prototype = Object.create(Phaser.Sprite.prototype);
