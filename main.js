@@ -55,7 +55,7 @@ window.onload = function() {
         // add enemies
         enemies = game.add.physicsGroup();
         for (var i = 1; i < chunks*2; i++) {
-            var enemy = new Enemy(game, randomBetween(0, worldWidth-32), randomBetween(0, worldHeight-32),  1, enemySpeed);
+            var enemy = new Enemy(game, randomBetween(0, worldWidth-32), randomBetween(0, worldHeight-32),  Math.random() < 0.5 ? -1 : 1, enemySpeed);
             enemies.add(enemy);
         }
     };
@@ -261,7 +261,7 @@ window.onload = function() {
     **/
     Enemy = function (game, x, y, direction, speed) {
         Phaser.Sprite.call(this, game, x, y, "antiblob");
-        this.anchor.setTo(0.5);
+        this.anchor.setTo(0.5, 0.5);
         game.physics.enable(this, Phaser.Physics.ARCADE);
         this.xSpeed = direction*speed;
 
