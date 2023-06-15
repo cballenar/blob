@@ -288,6 +288,15 @@ window.onload = function() {
         else if (this.body.velocity.x > 0) {
             this.play('right');
         }
+
+        if (this.x < 22) {
+            this.x = worldWidth-22;
+        } else if (this.x > worldWidth-22) {
+            if (this.y > worldHeight - 100) {
+                this.y = 0;
+            }
+            this.x = 22;
+        }
     };
 
     function moveEnemy(enemy, platform) {
